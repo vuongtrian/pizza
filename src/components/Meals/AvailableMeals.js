@@ -1,51 +1,63 @@
+import { useEffect, useState } from "react";
 import Card from "../UI/Card";
 import classes from "./AvailableMeals.module.css";
 import MealItem from "./MealItem/MealItem";
 
-const DUMMY_MEALS = [
-  {
-    id: "m1",
-    name: "Seafood & Peach",
-    description:
-      "Shrimp, Ham, Peach exploded together with Thousand Island sauce",
-    price: 22.99,
-  },
-  {
-    id: "m2",
-    name: "Seafood Pesto",
-    description: "Shrimp, crab stick, squid, broccoli and green Pesto sauce",
-    price: 16.5,
-  },
-  {
-    id: "m3",
-    name: "Seafood Cocktail",
-    description:
-      "Fresh prawns, succulent crab sticks, ham and juicy pineapples with Thousand Island sauce",
-    price: 12.99,
-  },
-  {
-    id: "m4",
-    name: "Seafood Deluxe",
-    description: "Prawn, crab sticks & calamari with Marinara sauce",
-    price: 18.99,
-  },
-  {
-    id: "m5",
-    name: "Tropical Seafood",
-    description: "Crab sticks, pineapples and Thousand Island sauce",
-    price: 14.99,
-  },
-  {
-    id: "m6",
-    name: "Shrimp Cocktail",
-    description:
-      "Shrimps, champignon mushrooms, juicy pineapples, fresh tomatoes and Thousand Island Sauce",
-    price: 12.68,
-  },
-];
-
 const AvailableMeals = () => {
-  const mealsList = DUMMY_MEALS.map((meal) => (
+  const [meals, setMeals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [httpError, setHttpError] = useState();
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      const response = await fetch(
+        "https://pizza-app-6652f-default-rtdb.asia-southeast1.firebasedatabase.app/meals.json"
+      );
+
+      if (!response.ok) {
+        throw new Error("Something went wrong!");
+      }
+
+      const responseData = await response.json();
+
+      const loadedMeals = [];
+
+      for (const key in responseData) {
+        loadedMeals.push({
+          id: key,
+          name: responseData[key].name,
+          description: responseData[key].description,
+          price: responseData[key].price,
+        });
+      }
+
+      setMeals(loadedMeals);
+      setIsLoading(false);
+    };
+
+    fetchMeals().catch((error) => {
+      setIsLoading(false);
+      setHttpError(error.message);
+    });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className={classes.MealsLoading}>
+        <p>Loading...</p>
+      </section>
+    );
+  }
+
+  if (httpError) {
+    return (
+      <section className={classes.MealsError}>
+        <p>{httpError}</p>
+      </section>
+    );
+  }
+
+  const mealsList = meals.map((meal) => (
     <MealItem
       id={meal.id}
       key={meal.id}
